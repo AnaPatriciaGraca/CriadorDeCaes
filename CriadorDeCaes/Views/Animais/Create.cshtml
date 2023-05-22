@@ -1,17 +1,19 @@
 ﻿@model CriadorDeCaes.Models.Animais
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Adicionar";
 }
 
-<h1>Create</h1>
+<h1>Adicionar um novo animal</h1>
 
-<h4>Animais</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Create">
+            @*zona para mostrar as mensagens de erro*@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            @*itens do formulário*@
             <div class="form-group">
                 <label asp-for="Nome" class="control-label"></label>
                 <input asp-for="Nome" class="form-control" />
@@ -37,14 +39,26 @@
                 <input asp-for="RegistoLOP" class="form-control" />
                 <span asp-validation-for="RegistoLOP" class="text-danger"></span>
             </div>
+
+            @*'dropdown' para as Raças*@
             <div class="form-group">
                 <label asp-for="RacaFK" class="control-label"></label>
-                <select asp-for="RacaFK" class ="form-control" asp-items="ViewBag.RacaFK"></select>
+                <select asp-for="RacaFK" class ="form-control" asp-items="ViewBag.RacaFK">
+                    @*Não deixar por defeito uma opção criada para o utilizador*@
+                    <option value="0">Escolah por favor uma raça</option>
+                </select>
             </div>
+
+            @*'dropdown' para os Criadores*@
             <div class="form-group">
                 <label asp-for="CriadorFK" class="control-label"></label>
-                <select asp-for="CriadorFK" class ="form-control" asp-items="ViewBag.CriadorFK"></select>
+                <select asp-for="CriadorFK" class="form-control" asp-items="ViewBag.CriadorFK">
+                    @*Não deixar por defeito uma opção criada para o utilizador*@
+                    <option value="0">Escolha por favor um criador</option>
+                </select>
             </div>
+
+            <br />
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>

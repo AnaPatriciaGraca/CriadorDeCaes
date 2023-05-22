@@ -11,47 +11,75 @@ using CriadorDeCaes.Models;
 namespace CriadorDeCaes.Controllers
 {
     public class AnimaisController : Controller
-    {
+    {   
+        /// <summary>
+        /// atributo para representar o acesso à base de dados
+        /// </summary>
         private readonly ApplicationDbContext _context;
-
+        // tem de ser obrigatoriamente instanciado no construtor
+        // >> começa com "_" porque é uma ferramenta/recurso que utilizamos internamente
+        // >> começa com minúscula por ser privado
         public AnimaisController(ApplicationDbContext context)
         {
             _context = context;
         }
 
+        /// <summary>
+        /// Devolve um objecto do tipo "ActionResult" - invoca uma view, prepara um trabalho e entrega à view
+        /// </summary>
         // GET: Animais
-        public async Task<IActionResult> Index()
-        {
-            var applicationDbContext = _context.Animais.Include(a => a.Criador).Include(a => a.Raca);
-            return View(await applicationDbContext.ToListAsync());
+        public async Task<IActionResult> Index()    // invoca conteúdo para uma View chamada "Index"
+        {   
+            // pesquisar os dados dos animais, para os mostrar no ecrã
+            // SELECT * FROM Animais a  INNER JOIN Criadores c ON a.CriadorFK = c.ID
+            //                          INNER JOIN Racas r ON a.RacaFK = r.ID
+            // *** esta expressão está escrita em LINQ
+            var animais = _context.Animais
+                                        .Include(a => a.Criador)
+                                        .Include(a => a.Raca);
+            // invoco a view, fornecendo-lhe os dados que ela necessita
+            return View(await animais.ToListAsync());   // o método é assíncrono porque tem um "await" (sempre!)
         }
 
         // GET: Animais/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
+        public async Task<IActionResult> Details(int? id) //"?" significa que é um parâmetro que pode ser nulo
+        {   // proteção à pesquisa, caso a tabela dos Animais esteja vazia ou o Id seja nulo
             if (id == null || _context.Animais == null)
-            {
+            {   // redirecionar para outro sítio! Por norma redireciona-se para o Index (para alterações fraudulentas ao URL)
                 return NotFound();
             }
 
-            var animais = await _context.Animais
+            // pesquisar os dados dos animais, para os mostrar no ecrã
+            // SELECT * FROM Animais a  INNER JOIN Criadores c ON a.CriadorFK = c.ID
+            //                          INNER JOIN Racas r ON a.RacaFK = r.ID
+            // WHERE a.ID = id
+            // *** esta expressão está escrita em LINQ
+            var animal = await _context.Animais     // alterar nome da variavel para singular porque apenas estamos à procura de um animal
                 .Include(a => a.Criador)
                 .Include(a => a.Raca)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (animais == null)
+                .FirstOrDefaultAsync(m => m.Id == id); // igual ao LIMIT 1 caso retorne mais do que 1 resultado
+
+            // proteção à pesquisa, caso o Id não exista
+            if (animal == null)
             {
                 return NotFound();
             }
 
-            return View(animais);
+            return View(animal);
         }
 
         // GET: Animais/Create
+        /// <summary>
+        /// invoca a view para criar um novo animal
+        /// </summary>
+        /// <returns></returns>
         public IActionResult Create()
-        {
-            ViewData["CriadorFK"] = new SelectList(_context.Criadores, "Id", "CodPostal");
-            ViewData["RacaFK"] = new SelectList(_context.Racas, "Id", "Id");
-            return View();
+        {   //chaves forasteiras para as tabelas "Animais" e " Racas"
+            //preparar os dados que vão ficar associados às chaves forasteiras - trasportar dados do Controller para a View
+            ViewData["CriadorFK"] = new SelectList(_context.Criadores, "Id", "Nome");   //valores selecionados no ecrã - alterar
+            ViewData["RacaFK"] = new SelectList(_context.Racas.OrderBy(r=>r.Nome), "Id", "Nome");  // limitar e ordenar número de valores que aparecem na dropDown
+            
+            return View();  //não estou a fornecer dados específicos para a View processar
         }
 
         // POST: Animais/Create
