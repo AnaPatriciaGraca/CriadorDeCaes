@@ -9,8 +9,13 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
-            @*zona para mostrar as mensagens de erro*@
+        @*<form asp-action="Create" method="get"> GET expõe as variaveis no URL, perigoso!*@
+        @*por defeito ele assume que o método é o POST
+            ENCTYPE resolve o problema da foto por defeito de a fotografia ser enviada em binário --- por defeito é text/plain""
+        *@
+        <form asp-action="Create" enctype="multipart/form-data">
+
+            @*zona para mostrar as mensagens de erro que venham do controller*@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             @*itens do formulário*@
@@ -45,7 +50,7 @@
                 <label asp-for="RacaFK" class="control-label"></label>
                 <select asp-for="RacaFK" class ="form-control" asp-items="ViewBag.RacaFK">
                     @*Não deixar por defeito uma opção criada para o utilizador*@
-                    <option value="0">Escolah por favor uma raça</option>
+                    <option value="0">Escolha por favor uma raça</option>
                 </select>
             </div>
 
@@ -56,6 +61,18 @@
                     @*Não deixar por defeito uma opção criada para o utilizador*@
                     <option value="0">Escolha por favor um criador</option>
                 </select>
+            </div>
+
+
+            @*'file picker' para eferuar submissão de uma imagem*@
+            <div class="form-group">
+                <label class="control-label">Fotografia</label>
+                @*este filtro do "accept" é apenas um conforto vamos ter de confirmar na mesma se é um pdf ou não pr exemplo
+                    atenção que não queremos guardar a imagem diretamente na base de dados, apenas o diretorio para a imagem
+
+                    por defeito vai enviar em formato binário e estamos a espera de aceitar uma string por isso no controlador aparece a NULL
+                *@
+                <input type="file" accept=".png,.jpg,.jpeg" name="fotografia" />
             </div>
 
             <br />

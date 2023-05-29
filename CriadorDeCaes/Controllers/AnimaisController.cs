@@ -19,6 +19,7 @@ namespace CriadorDeCaes.Controllers
         // tem de ser obrigatoriamente instanciado no construtor
         // >> começa com "_" porque é uma ferramenta/recurso que utilizamos internamente
         // >> começa com minúscula por ser privado
+        // variaveis publicas - CamelCase
         public AnimaisController(ApplicationDbContext context)
         {
             _context = context;
@@ -30,7 +31,7 @@ namespace CriadorDeCaes.Controllers
         // GET: Animais
         public async Task<IActionResult> Index()    // invoca conteúdo para uma View chamada "Index"
         {   
-            // pesquisar os dados dos animais, para os mostrar no ecrã
+            // pesquisar os dados dos animal, para os mostrar no ecrã
             // SELECT * FROM Animais a  INNER JOIN Criadores c ON a.CriadorFK = c.ID
             //                          INNER JOIN Racas r ON a.RacaFK = r.ID
             // *** esta expressão está escrita em LINQ
@@ -49,7 +50,7 @@ namespace CriadorDeCaes.Controllers
                 return NotFound();
             }
 
-            // pesquisar os dados dos animais, para os mostrar no ecrã
+            // pesquisar os dados dos animal, para os mostrar no ecrã
             // SELECT * FROM Animais a  INNER JOIN Criadores c ON a.CriadorFK = c.ID
             //                          INNER JOIN Racas r ON a.RacaFK = r.ID
             // WHERE a.ID = id
@@ -87,17 +88,70 @@ namespace CriadorDeCaes.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Nome,Sexo,DataNasc,DataCompra,RegistoLOP,RacaFK,CriadorFK")] Animais animais)
+        public async Task<IActionResult> Create([Bind("Id,Nome,Sexo,DataNasc,DataCompra,RegistoLOP,RacaFK,CriadorFK")] Animais animal, IFormFile fotografia)
         {
-            if (ModelState.IsValid)
+            if (animal.RacaFK == 0 || animal.CriadorFK == 0)
             {
-                _context.Add(animais);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                //não escolhi a RacaFK
+                //gerar uma mensagem de erro
+                ModelState.AddModelError("", "Deve escolher uma Raça, por favor");
             }
-            ViewData["CriadorFK"] = new SelectList(_context.Criadores, "Id", "CodPostal", animais.CriadorFK);
-            ViewData["RacaFK"] = new SelectList(_context.Racas, "Id", "Id", animais.RacaFK);
-            return View(animais);
+            else
+            {
+                if (animal.CriadorFK == 0)
+                {
+                    //não escolhi o CriadorFK
+                    ModelState.AddModelError("", "Deve escolher um Criador, por favor");
+                }
+                else
+                {
+                    //se cheguei aqui é porque escolhi uma raça e um criador
+                    //vamos avaliar o ficheiro, se é que ele existe
+                    if (fotografia == null)
+                    {
+                        //não há ficheiro (imagem) - colocar uma imagem por defeito
+                        animal.ListaFotografias.Add(new Fotografias
+                        {
+                            Data = DateTime.Now,
+                            Local = "no image",
+                            Ficheiro = "noAnimal.jpg"
+                        });
+
+
+                    } else
+                    {
+                        //existe um ficheiro (será uma imagem?)
+                        if (!(fotografia.ContentType == "image/jpeg" || fotografia.ContentType == "image/jpg" || fotografia.ContentType == "image/png"))
+                            //existe ficheiro, mas não é uma imagem
+                        {
+                            ModelState.AddModelError("", "Por favor, introduza uma imagem válida (PNG ou JPG)");
+                        }else
+                        {
+                            //há imagem
+                        }
+                    }
+                }
+            }
+
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    _context.Add(animal);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+            catch (Exception)
+            {
+                ModelState.AddModelError("", "Ocorreu um erro no acesso à Base de dados..."); //este erro vai ser lançado caso não sejam preenchidas as FK
+                //throw;
+            }
+
+            //preparar os dados para serem enviados de novo para a View - temos de volta a carregar os dados para as DropDowns
+            ViewData["CriadorFK"] = new SelectList(_context.Criadores, "Id", "Nome", animal.CriadorFK);
+            ViewData["RacaFK"] = new SelectList(_context.Racas.OrderBy(r => r.Nome), "Id", "Nome", animal.RacaFK); //r de Registo
+            return View(animal);
         }
 
         // GET: Animais/Edit/5
