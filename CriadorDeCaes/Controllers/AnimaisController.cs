@@ -16,13 +16,19 @@ namespace CriadorDeCaes.Controllers
         /// atributo para representar o acesso à base de dados
         /// </summary>
         private readonly ApplicationDbContext _context;
+        /// <summary>
+        /// objeto cm dados do servidor web
+        /// </summary>
+        private readonly IWebHostEnvironment _environment;
+
         // tem de ser obrigatoriamente instanciado no construtor
         // >> começa com "_" porque é uma ferramenta/recurso que utilizamos internamente
         // >> começa com minúscula por ser privado
         // variaveis publicas - CamelCase
-        public AnimaisController(ApplicationDbContext context)
+        public AnimaisController(ApplicationDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         /// <summary>
@@ -90,6 +96,10 @@ namespace CriadorDeCaes.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Nome,Sexo,DataNasc,DataCompra,RegistoLOP,RacaFK,CriadorFK")] Animais animal, IFormFile fotografia)
         {
+            //vars auxiliares
+            bool existeFoto = false;
+            string nomeFoto = "";
+
             if (animal.RacaFK == 0 || animal.CriadorFK == 0)
             {
                 //não escolhi a RacaFK
@@ -127,7 +137,25 @@ namespace CriadorDeCaes.Controllers
                             ModelState.AddModelError("", "Por favor, introduza uma imagem válida (PNG ou JPG)");
                         }else
                         {
-                            //há imagem
+                            //há imagem - definir nome do ficheiro e onde guardar
+                            existeFoto = true;
+                            //nome do fihceiro - garantir que os nomes são únicos
+                            Guid g = Guid.NewGuid();
+                            nomeFoto = animal.CriadorFK + "_" + g.ToString();
+                            string extensao = Path.GetExtension(fotografia.FileName).ToLower();
+
+                            nomeFoto += extensao;
+
+                            //onde guardar o ficheiro (wwwroot, algures na nossa aplicação ou repositorio de ficheiros?)
+                            // vamos guardar no wwwroot mas apenas após guardarmos os daddos do animal na BD
+
+                            //guardar os dados do ficheiro na BD
+                            animal.ListaFotografias.Add(new Fotografias
+                            {
+                                Ficheiro = nomeFoto,
+                                Local = "",
+                                Data = DateTime.Now
+                            });
                         }
                     }
                 }
@@ -136,9 +164,30 @@ namespace CriadorDeCaes.Controllers
             try
             {
                 if (ModelState.IsValid)
-                {
+                {   //adicionar os dados do 'animal' à BD mas apenas na memória do servidor web 
                     _context.Add(animal);
+                    //transferir os dados para a BD
                     await _context.SaveChangesAsync();
+
+
+                    //se cheguei aqui, vamos guarar o ficheiro no disco rígido 
+                    if (existeFoto)
+                    {
+                        //determinar o local onde a foto será guardada (perguntar onde está o wwwroot e acrescentar '/imagens
+                        //vamos precisar de um recurso do controller    - linha 22  IWebHostEnvironment
+                        string nomePastaFoto = _environment.WebRootPath;
+                        //juntar o nome da pasta onde serão guardadas as imagens
+                        nomePastaFoto = Path.Combine(nomePastaFoto, "imagens");
+                        // mas a pasta existe?
+                        if (!Directory.Exists(nomePastaFoto))
+                        {
+                            Directory.CreateDirectory(nomePastaFoto);
+                        }
+                        // vamos iniciar a escrita do ficheiro no disco rígido
+                        nomeFoto = Path.Combine(nomePastaFoto, nomeFoto);
+                        using var stream = new FileStream(nomeFoto, FileMode.Create);
+                        await fotografia.CopyToAsync(stream);
+                    }
                     return RedirectToAction(nameof(Index));
                 }
             }
