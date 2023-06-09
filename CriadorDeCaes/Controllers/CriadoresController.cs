@@ -12,6 +12,11 @@ namespace CriadorDeCaes.Controllers
 {
     public class CriadoresController : Controller
     {
+        // os objectos gerados por esta classe é que conseguem aceder a este atributo - por ser privado
+        // ApplicationDbContext - classe que referencia a BD
+        /// <summary>
+        /// objeto para referenciar a base de dados do projeto
+        /// </summary>
         private readonly ApplicationDbContext _context;
 
         public CriadoresController(ApplicationDbContext context)
@@ -20,7 +25,7 @@ namespace CriadorDeCaes.Controllers
         }
 
         // GET: Criadores
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index()    //IActionResult  - método que devolve uma view
         {
               return View(await _context.Criadores.ToListAsync());
         }

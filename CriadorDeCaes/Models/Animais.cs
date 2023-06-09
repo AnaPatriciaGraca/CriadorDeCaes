@@ -33,20 +33,23 @@ namespace CriadorDeCaes.Models {
       /// </summary>
       public string Sexo { get; set; }
 
-      /// <summary>
-      /// Data de nascimento
-      /// </summary>
+        /// <summary>
+        /// Data de nascimento
+        /// </summary>
+        [Display(Name ="Data de Nascimento")]
       public DateTime DataNasc { get; set; }
 
-      /// <summary>
-      /// data de compra do animal
-      /// Se nulo, o animal nasceu nas instalações do criador
-      /// </summary>
+        /// <summary>
+        /// data de compra do animal
+        /// Se nulo, o animal nasceu nas instalações do criador
+        /// </summary>
+        [Display(Name = "Data de Compra")]
       public DateTime DataCompra { get; set; }
 
-      /// <summary>
-      /// número de registo no LOP
-      /// </summary>
+        /// <summary>
+        /// número de registo no LOP
+        /// </summary>
+        [Display(Name ="Registo LOP")]
       public string RegistoLOP { get; set; }
 
       // ****************************************
@@ -62,14 +65,18 @@ namespace CriadorDeCaes.Models {
       /// FK para a identificação da Raça do animal
       /// </summary>
       [ForeignKey(nameof(Raca))]
+        [Display(Name = "Raça")]
       public int RacaFK { get; set; }
+        [Display(Name ="Raça")]
       public Racas Raca { get; set; }
 
       /// <summary>
       /// FK para o Criador dono do animal
       /// </summary>
       [ForeignKey(nameof(Criador))]
+        [Display(Name ="Criador")]
       public int CriadorFK { get; set; }
+        [Display(Name ="Criador")]
       public Criadores Criador { get; set; }
 
    }
